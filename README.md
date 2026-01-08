@@ -7,5 +7,5 @@ One can generate a graph by `./plot "exp" xrange yrange` i.e.:
 ```
 $ ./plot "x^2" -2..2 -1..2
 ```
-will generate this graph:
+will generate this graph:<br> 
 ![quadratic](/Graphs/quadratic.png)
