@@ -6,6 +6,38 @@
 #define WIDTH 600
 #define HEIGHT 600 
 
+// Using Bresenham’s line algorithm https://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm.
+void draw_line(SDL_Surface *s, int x0, int y0, int x1, int y1, Uint32 color) {
+    Uint32 *pixels = (Uint32 *)s->pixels;
+
+    int dx = abs(x1 - x0);
+    int dy = abs(y1 - y0);
+
+    int sx = 1;
+    if (x0 >= x1) sx = -1; 
+    int sy = 1;
+    if (y0 >= y1) sy = -1;
+
+    int err = dx - dy;
+
+    while (x0 != x1 || y0 != y1) {
+        
+        if (x0 >= 0 && x0 < s->w && y0 >= 0 && y0 < s->h) {
+            pixels[y0 * s->w + x0] = color;
+        }
+
+        int e2 = 2 * err;
+        if (e2 > -dy) {
+            err -= dy;
+            x0 += sx;
+        }
+        if (e2 < dx) {
+            err += dx;
+            y0 += sy;
+        }
+    }
+}
+
 void draw_grid(SDL_Surface *s, int x_min, int x_max, int y_min, int y_max) {
     Uint32 *pixels = (Uint32 *)s->pixels;
     Uint32 blue = SDL_MapRGB(s->format, 0, 0, 255);
@@ -15,7 +47,7 @@ void draw_grid(SDL_Surface *s, int x_min, int x_max, int y_min, int y_max) {
     // Vertical.
     for (int x = x_min; x <= x_max; x++) {
         int sx = (x - x_min) * (WIDTH-1) / (x_max - x_min);
-        
+
         color = gray;
         if (x == 0) color = blue;
 
@@ -38,17 +70,19 @@ void draw_grid(SDL_Surface *s, int x_min, int x_max, int y_min, int y_max) {
 }
 
 void draw_function(SDL_Surface *s, int x_min, int x_max, int y_min, int y_max, te_expr *expr, double *x) {
-    Uint32 *pixels = (Uint32 *)s->pixels;
     Uint32 red = SDL_MapRGB(s->format, 255, 0, 0);
-
+    int prev_sx = 0;
+    int prev_sy = 0;
     for (int sx = 0; sx < WIDTH; sx++) {
         *x = x_min + (double)sx * (x_max - x_min) / (WIDTH - 1);
         double y = te_eval(expr);
 
         int sy = (int)((y_max - y) * (HEIGHT - 1) / (y_max - y_min));
-        if (sy >= 0 && sy < HEIGHT) {
-            pixels[sy * s->w + sx] = red;
-        }
+
+        draw_line(s, prev_sx, prev_sy, sx, sy, red);
+        
+        prev_sx = sx;
+        prev_sy = sy;
     }
 }
 
@@ -64,7 +98,7 @@ int main (int argc, char *argv[]) {
         fprintf(stderr, "Invalid x range: %s\n", argv[2]);
         return 1;
     }
-    
+
     int y_min, y_max;
     if (sscanf(argv[3], "%d..%d", &y_min, &y_max) != 2) {
         fprintf(stderr, "Invalid y range: %s\n", argv[3]);
@@ -89,7 +123,7 @@ int main (int argc, char *argv[]) {
 
     draw_grid(surface, x_min, x_max, y_min, y_max);
     draw_function(surface, x_min, x_max, y_min, y_max, expr, &x);
-    
+
     te_free(expr);
 
     // Show the window and wait for close.
