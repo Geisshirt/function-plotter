@@ -5,7 +5,7 @@ parse the function and SDL2 to create graphs.
 ## Usage
 One can generate a graph by `./plot "exp" xrange yrange` i.e.:
 ```
-$ ./plot "x^2" -2..2 -1..2
+$ ./plot "x * sin(x)" -10..10 -10..10
 ```
 will generate this graph:<br> 
-![quadratic](/Graphs/quadratic.png)
+![quadratic](/Graphs/xsinx.png)
